@@ -25,9 +25,7 @@ function App() {
 </div>))} */}
 {tasks.map(task => (
   <ToDoList key={task.id}
-    id={task.id}
-    task={task.task}
-    completed={task.completed}
+    {...task}
     onToggle={updateTask}
   />
 ))}
