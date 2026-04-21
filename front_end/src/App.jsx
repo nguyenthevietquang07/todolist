@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Link, Routes, Route, useParams } from 'react-router-dom'
+import { Link, Routes, Route, useParams } from 'react-router-dom'
 import './App.css'
 import { initialTasks } from "./data.jsx";
 import ToDoList from "./ToDoList.jsx";
@@ -60,8 +60,36 @@ function ErrorPage(){
   )
 }
 
+function FavoritePage(){
+  const [favorites, setFavorites] = useState([])
+
+  useEffect(() => {
+    async function fetchFavorites() {
+      try {
+        const res = await fetch("http://localhost:3001/api/pokemon/favorites")
+        const data = await res.json()
+        setFavorites(data.favorites || [])
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    fetchFavorites()
+  }, [])
+
+  return (
+    <div className = "pokemon-grid">
+      {favorites.map((p) => (
+        <Link key={p.pokemon_id} to={`/pokemon/${p.pokemon_id}`}>
+          <PokemonCard sprite={p.sprite} name={p.name}/>
+        </Link>
+      ))}
+    </div>
+  )
+}
+
 function PokemonPage(){
   const [pokemon, setPokemon] = useState([])
+  const [favoriteIds, setFavoriteIds] = useState([])
 
   useEffect(() => {
     async function fetchPokemon() {
@@ -76,12 +104,64 @@ function PokemonPage(){
     fetchPokemon()
   }, [])
 
+  useEffect(() => {
+    async function fetchFavoriteIds() {
+      try {
+        const res = await fetch("http://localhost:3001/api/pokemon/favorites")
+        const data = await res.json()
+        const ids = (data.favorites || []).map((f) => Number(f.pokemon_id))
+        setFavoriteIds(ids)
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    fetchFavoriteIds()
+  }, [])
+
+  async function toggleFavorite(p, e) {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      const pokemonId = Number(p.id)
+      const isFav = favoriteIds.includes(pokemonId)
+      const res = isFav
+        ? await fetch(`http://localhost:3001/api/pokemon/favorites/${pokemonId}`, { method: "DELETE" })
+        : await fetch("http://localhost:3001/api/pokemon/favorites", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pokemon_id: pokemonId
+            })
+          })
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.detail || errorData.message || `Failed to toggle favorite (${res.status})`)
+      }
+      setFavoriteIds((prev) =>
+        isFav ? prev.filter((id) => id !== pokemonId) : [...new Set([...prev, pokemonId])]
+      )
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
   return (
     <div className = "pokemon-grid">
-      {pokemon.map(p => 
-      <Link key={p.id} to={`/pokemon/${p.id}`}>
-      <PokemonCard sprite={p.sprite} name={p.name}/>
-      </Link>)}
+      {pokemon.map(p => (
+        <div key={p.id} className="pokemon-item">
+          <Link to={`/pokemon/${p.id}`}>
+            <PokemonCard sprite={p.sprite} name={p.name}/>
+          </Link>
+          <button
+            className={`favorite-star ${favoriteIds.includes(Number(p.id)) ? "favorite" : ""}`}
+            onClick={(e) => toggleFavorite(p, e)}
+            aria-label="Add to favorites"
+          >
+            {favoriteIds.includes(Number(p.id)) ? "★" : "☆"}
+          </button>
+        </div>
+      ))}
     </div>
   )
 }
@@ -89,6 +169,7 @@ function PokemonPage(){
 function PokemonDetailPage(){
   const { id } = useParams()
   const [pokemonDetails, setPokemonDetails] = useState(null)
+  const [isFavorite, setIsFavorite] = useState(false)
 
   useEffect(() => {
     async function fetchPokemonDetails() {
@@ -98,12 +179,60 @@ function PokemonDetailPage(){
     }
     fetchPokemonDetails()
   }, [id])
+
+  useEffect(() => {
+    async function fetchFavoriteStatus() {
+      try {
+        const res = await fetch("http://localhost:3001/api/pokemon/favorites")
+        const data = await res.json()
+        const ids = (data.favorites || []).map((f) => Number(f.pokemon_id))
+        setIsFavorite(ids.includes(Number(id)))
+      } catch (err) {
+        console.error(err)
+      }
+    }
+    fetchFavoriteStatus()
+  }, [id])
+
+  async function toggleDetailFavorite() {
+    if (!pokemonDetails) return
+    try {
+      const pokemonId = Number(pokemonDetails.id)
+      const res = isFavorite
+        ? await fetch(`http://localhost:3001/api/pokemon/favorites/${pokemonId}`, { method: "DELETE" })
+        : await fetch("http://localhost:3001/api/pokemon/favorites", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              pokemon_id: pokemonId
+            })
+          })
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.detail || errorData.message || `Failed to toggle favorite (${res.status})`)
+      }
+      setIsFavorite((prev) => !prev)
+    } catch (err) {
+      console.error(err)
+    }
+  }
+
     if (!pokemonDetails) return <p>Loading...</p>
 
   return (
     <div>
     <div>
-      <h1>Pokemon Details</h1>
+      <div className="detail-header">
+        <h1>Pokemon Details</h1>
+        <button
+          className={`favorite-star detail-favorite-star ${isFavorite ? "favorite" : ""}`}
+          onClick={toggleDetailFavorite}
+          aria-label="Toggle favorite"
+        >
+          {isFavorite ? "★" : "☆"}
+        </button>
+      </div>
       <PokemonTrait 
         key={pokemonDetails.id}
         name={pokemonDetails.name}
@@ -131,6 +260,7 @@ function App() {
         <Link to="/">Home</Link>
         <Link to="/about">About</Link>
         <Link to="/pokemon">Pokemon</Link>
+        <Link to="/favorites">Favorites</Link>
       </nav>
 
       <Routes>
@@ -138,6 +268,7 @@ function App() {
         <Route path="/" element={<Home/>}></Route>
         <Route path="/about" element={<About />} />
         <Route path="/pokemon" element={<PokemonPage />} />
+        <Route path="/favorites" element={<FavoritePage />} />
         <Route path="/pokemon/:id" element={<PokemonDetailPage />} />
         <Route path="*" element={<ErrorPage />} />
       </Routes>

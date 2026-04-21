@@ -14,6 +14,10 @@ body {
   padding: 30px;
 }
 
+.pokemon-item {
+  position: relative;
+}
+
 .pokemon-card {
   background: white;
   border: 1px solid #dfe5ff;
@@ -39,6 +43,37 @@ body {
 .pokemon-card img {
   width: 96px;
   height: 96px;
+}
+
+.favorite-star {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #dfe5ff;
+  border-radius: 999px;
+  font-size: 20px;
+  color: gray;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  line-height: 1;
+}
+
+.favorite-star.favorite {
+  color: #ffd700;
+}
+
+.detail-header {
+  max-width: 500px;
+  margin: 0 auto 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.detail-favorite-star {
+  position: static;
 }
 
 .pokemon-trait {
