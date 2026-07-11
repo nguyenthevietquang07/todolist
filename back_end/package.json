@@ -1,4 +1,7 @@
 {
+  "name": "pokedex-favorites-api",
+  "version": "1.0.0",
+  "description": "Express API for the Pokedex Favorites App.",
   "scripts": {
     "start": "node server.js"
   },

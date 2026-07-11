@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react'
 import { Link, Routes, Route, useParams } from 'react-router-dom'
 import './App.css'
-import { initialTasks } from "./data.jsx";
-import ToDoList from "./ToDoList.jsx";
 import PokemonCard from './PokemonCard.jsx';
 import PokemonTrait from './PokemonTrait.jsx'
+
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:3001";
 
 function About() {
   return (
@@ -14,42 +14,6 @@ function About() {
     </div>
   )
 }
-
-// function ToDoPage() {
-//   const [tasks, setTasks] = useState(initialTasks);
-//   const [content, setContent] = useState("");
-
-//   function addTask(content){
-//     const newId = Math.max(...tasks.map(t=>t.id)) + 1;
-//     const newTask = {id: newId, task: content, completed: false };
-//     setTasks([...tasks, newTask]);
-//     setContent("");
-//   }
-
-//   function updateTask(key){
-//     setTasks(tasks.map(t => t.id === key ?  { ...t, completed: !t.completed} : t));
-//   }
-
-//   return (
-    
-//     <div>
-//     <h1> To do list </h1> 
-//     {/* {tasks.map(task => (<div key={task.id}> {task.task} {String(task.completed)} <button onClick={()=>updateTask(task.id)}>Mark as Done</button>
-// </div>))} */}
-//     {tasks.map(task => (
-//       <ToDoList key={task.id}
-//         {...task}
-//         onToggle={updateTask}
-//       />
-//     ))}
-//     <form onSubmit={(e)=>{e.preventDefault(); addTask(content)}}>
-//       <input value={content} onChange={(e) => setContent(e.target.value)}/>
-//       <button type="submit">Add Task</button>
-//     </form>
-//         </div>
-
-//       )
-// }
 
 function ErrorPage(){
   return (
@@ -66,7 +30,7 @@ function FavoritePage(){
   useEffect(() => {
     async function fetchFavorites() {
       try {
-        const res = await fetch("http://localhost:3001/api/pokemon/favorites")
+        const res = await fetch(`${API_BASE_URL}/api/pokemon/favorites`)
         const data = await res.json()
         setFavorites(data.favorites || [])
       } catch (err) {
@@ -94,7 +58,7 @@ function PokemonPage(){
   useEffect(() => {
     async function fetchPokemon() {
       try {
-        const res = await fetch("http://localhost:3001/api/pokemon")
+        const res = await fetch(`${API_BASE_URL}/api/pokemon`)
         const data = await res.json()
         setPokemon(data.list || [])
       } catch (err) {
@@ -107,7 +71,7 @@ function PokemonPage(){
   useEffect(() => {
     async function fetchFavoriteIds() {
       try {
-        const res = await fetch("http://localhost:3001/api/pokemon/favorites")
+        const res = await fetch(`${API_BASE_URL}/api/pokemon/favorites`)
         const data = await res.json()
         const ids = (data.favorites || []).map((f) => Number(f.pokemon_id))
         setFavoriteIds(ids)
@@ -125,8 +89,8 @@ function PokemonPage(){
       const pokemonId = Number(p.id)
       const isFav = favoriteIds.includes(pokemonId)
       const res = isFav
-        ? await fetch(`http://localhost:3001/api/pokemon/favorites/${pokemonId}`, { method: "DELETE" })
-        : await fetch("http://localhost:3001/api/pokemon/favorites", {
+        ? await fetch(`${API_BASE_URL}/api/pokemon/favorites/${pokemonId}`, { method: "DELETE" })
+        : await fetch(`${API_BASE_URL}/api/pokemon/favorites`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -158,7 +122,7 @@ function PokemonPage(){
             onClick={(e) => toggleFavorite(p, e)}
             aria-label="Add to favorites"
           >
-            {favoriteIds.includes(Number(p.id)) ? "★" : "☆"}
+            {favoriteIds.includes(Number(p.id)) ? "\u2605" : "\u2606"}
           </button>
         </div>
       ))}
@@ -173,7 +137,7 @@ function PokemonDetailPage(){
 
   useEffect(() => {
     async function fetchPokemonDetails() {
-      const res = await fetch(`http://localhost:3001/api/pokemon/${id}`)
+      const res = await fetch(`${API_BASE_URL}/api/pokemon/${id}`)
       const data = await res.json()
       setPokemonDetails(data)
     }
@@ -183,7 +147,7 @@ function PokemonDetailPage(){
   useEffect(() => {
     async function fetchFavoriteStatus() {
       try {
-        const res = await fetch("http://localhost:3001/api/pokemon/favorites")
+        const res = await fetch(`${API_BASE_URL}/api/pokemon/favorites`)
         const data = await res.json()
         const ids = (data.favorites || []).map((f) => Number(f.pokemon_id))
         setIsFavorite(ids.includes(Number(id)))
@@ -199,8 +163,8 @@ function PokemonDetailPage(){
     try {
       const pokemonId = Number(pokemonDetails.id)
       const res = isFavorite
-        ? await fetch(`http://localhost:3001/api/pokemon/favorites/${pokemonId}`, { method: "DELETE" })
-        : await fetch("http://localhost:3001/api/pokemon/favorites", {
+        ? await fetch(`${API_BASE_URL}/api/pokemon/favorites/${pokemonId}`, { method: "DELETE" })
+        : await fetch(`${API_BASE_URL}/api/pokemon/favorites`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -230,7 +194,7 @@ function PokemonDetailPage(){
           onClick={toggleDetailFavorite}
           aria-label="Toggle favorite"
         >
-          {isFavorite ? "★" : "☆"}
+          {isFavorite ? "\u2605" : "\u2606"}
         </button>
       </div>
       <PokemonTrait 
@@ -264,7 +228,6 @@ function App() {
       </nav>
 
       <Routes>
-        {/* <Route path="/" element={<ToDoPage />} /> */}
         <Route path="/" element={<Home/>}></Route>
         <Route path="/about" element={<About />} />
         <Route path="/pokemon" element={<PokemonPage />} />
