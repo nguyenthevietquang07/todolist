@@ -2,6 +2,8 @@
 
 A full-stack Pokedex application that lets users browse Pokemon, view details, and save favorites backed by Supabase.
 
+![Pokedex Pokemon grid](docs/demo/pokemon-grid.png)
+
 ## Highlights
 
 - React and Vite frontend with routed pages for home, Pokemon listing, favorites, and detail views
@@ -66,4 +68,3 @@ Backend:
 Frontend:
 
 - `VITE_API_BASE_URL` optional, defaults to `http://localhost:3001`
-
